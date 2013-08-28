@@ -4,7 +4,7 @@ A command line tool to convert between number bases and currencies.
 
 ## Installation
 
-    go build
+    go build main.go
     
 ## Usage
 
