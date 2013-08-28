@@ -8,7 +8,7 @@ A command line tool to convert between number bases and currencies.
     
 ## Usage
 
-    Usage: ac <command> [<value>]
+    Usage: aconv <command> [<value>]
     
     Commands:
        list          Lists all the possible conversions.
@@ -16,7 +16,7 @@ A command line tool to convert between number bases and currencies.
        help          Displays this help page.
     
     Examples:
-       ac bin2hex 1100110010   # Convert binary to hexadecimal
-       ac hex2dec ff5c         # Convert hexadecimal to decimal
-       ac eur2usd 10           # Convert Euros to US Dollars
-       ac aud2jpy 5000         # Convert Australian Dollars to Japanese Yens
+       aconv bin2hex 1100110010   # Convert binary to hexadecimal
+       aconv hex2dec ff5c         # Convert hexadecimal to decimal
+       aconv eur2usd 10           # Convert Euros to US Dollars
+       aconv aud2jpy 5000         # Convert Australian Dollars to Japanese Yens
