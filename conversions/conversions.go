@@ -43,6 +43,7 @@ var googleCalculatorRateCache map[string]float64
 func NewConversions(printer ConsolePrinter) *Conversions {
 	output := new(Conversions)
 	output.printer = printer
+	// To update list below, run "google_finance_currencies.go"
 	output.currencies = [][]string{
 		[]string{"AED", "UAE Dirham"},
 		[]string{"ANG", "Netherlands Antillean Guilder"},
