@@ -20,3 +20,7 @@ A command line tool to convert between number bases and currencies.
        aconv hex2dec ff5c         # Convert hexadecimal to decimal
        aconv eur2usd 10           # Convert Euros to US Dollars
        aconv aud2jpy 5000         # Convert Australian Dollars to Japanese Yens
+
+## License
+
+http://opensource.org/licenses/MIT
