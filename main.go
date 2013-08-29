@@ -1,7 +1,5 @@
 package main
 
-// TODO: Tool to loop through available currencies
-// TODO: Format currency numbers
 // TODO: Add unit?
 
 import (
@@ -42,7 +40,7 @@ func processCommand(args []string) (string, error) {
 		return "", errors.New("No command specified.")
 	}
 	
-	conv := conversions.NewConversions(nil)
+	conv := conversions.NewConversions()
 	
 	command := strings.ToLower(args[0])
 	

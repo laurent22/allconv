@@ -1,6 +1,7 @@
 package conversions
 
 import (
+	"../settings"
 	"errors"
 	"strconv"
 	"strings"
@@ -8,13 +9,8 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"time"
 )
-
-type ConsolePrinter interface {
-	Println(a ...interface{}) (int, error)
-	Print(a ...interface{}) (int, error)
-	Printf(format string, a ...interface{}) (int, error)
-}
 
 type Conversion struct {
 	category string
@@ -25,12 +21,11 @@ type Conversion struct {
 
 type Conversions struct {
 	inner []Conversion
-	printer ConsolePrinter
 	currencies [][]string
+	settings_ *settings.Settings
 }
 
 // {lhs: "1 British pound",rhs: "9.2661276 Chinese yuan",error: "",icc: true}
-
 type GoogleCalculatorResponse struct {
 	Lhs string `json:"lhs"`
 	Rhs string `json:"rhs"`
@@ -38,11 +33,9 @@ type GoogleCalculatorResponse struct {
 	Icc bool `json:"icc"`
 }
 
-var googleCalculatorRateCache map[string]float64
-
-func NewConversions(printer ConsolePrinter) *Conversions {
+func NewConversions() *Conversions {
 	output := new(Conversions)
-	output.printer = printer
+		
 	// To update list below, run "google_finance_currencies.go"
 	output.currencies = [][]string{
 		[]string{"AED", "UAE Dirham"},
@@ -215,17 +208,20 @@ func NewConversions(printer ConsolePrinter) *Conversions {
 	})
 	
 	currencyConv := func(input string, from string, to string) (string, error) {
-		if googleCalculatorRateCache == nil { googleCalculatorRateCache = make(map[string]float64) }
-		cacheKey := from + "_" + to
 		floatInput, err := strconv.ParseFloat(input, 64)
 		if err != nil { return "", err }
-		output, ok := googleCalculatorRateCache[cacheKey]
-		if ok { 
-			s := strconv.FormatFloat(output * floatInput, 'f', 8, 64)
-			return s, nil
+		
+		cacheKey := from + "_" + to
+		cachedValue := output.settings().ValueFloat64("GoogleFinance", cacheKey, -1)
+		if cachedValue >= 0 {
+			cachedTime := output.settings().ValueTime("GoogleFinance", cacheKey + "_time", time.Time{})
+			if time.Now().Sub(cachedTime) >= 10 * time.Minute {
+				// Recreate cache
+			} else {
+		 		return strconv.FormatFloat(cachedValue * floatInput, 'f', 2, 64), nil
+		 	}
 		}
 		gcUrl := "http://www.google.com/ig/calculator?hl=en&q=1" + strings.ToUpper(from) + "%3D%3F" + strings.ToUpper(to)
-		if printer != nil { printer.Println("Getting latest rates from " + gcUrl + " ...") }
 		resp, err := http.Get(gcUrl)
 		if err != nil { return "", err }
 		defer resp.Body.Close()
@@ -243,8 +239,9 @@ func NewConversions(printer ConsolePrinter) *Conversions {
 		if len(rhs) <= 0 { return "", errors.New("Invalid response format: " + googleResp.Rhs) }
 		conv, err := strconv.ParseFloat(rhs[0], 64)
 		if err != nil { return "", err }
-		googleCalculatorRateCache[cacheKey] = conv
-		return strconv.FormatFloat(conv * floatInput, 'f', 8, 64), nil
+		output.settings().SetValueFloat64("GoogleFinance", cacheKey, conv)
+		output.settings().SetValueTime("GoogleFinance", cacheKey + "_time", time.Now())
+		return strconv.FormatFloat(conv * floatInput, 'f', 2, 64), nil
 	}
 	
 	for i := 0; i < len(output.currencies); i++ {
@@ -260,6 +257,12 @@ func NewConversions(printer ConsolePrinter) *Conversions {
 	}
 	
 	return output
+}
+
+func (this *Conversions) settings() *settings.Settings {
+	if this.settings_ != nil { return this.settings_ }
+	this.settings_ = settings.New("allconv")
+	return this.settings_
 }
 
 func (this *Conversions) Convert(from string, to string, input string) (string, error) {
