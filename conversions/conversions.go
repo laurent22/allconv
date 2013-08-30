@@ -33,9 +33,41 @@ type GoogleCalculatorResponse struct {
 	Icc bool `json:"icc"`
 }
 
+type DistanceUnit struct {
+	name string
+	toBase float32
+}
+
 func NewConversions() *Conversions {
 	output := new(Conversions)
-		
+	
+	distances := []DistanceUnit{
+		DistanceUnit{"dam", 10},
+		DistanceUnit{"hm", 10e2},
+		DistanceUnit{"km", 10e3},
+		DistanceUnit{"Mm", 10e6},
+		DistanceUnit{"Gm", 10e9},
+		DistanceUnit{"Tm", 10e12},
+		DistanceUnit{"Pm", 10e15},
+		DistanceUnit{"Em", 10e18},
+		DistanceUnit{"Zm", 10e21},
+		DistanceUnit{"Ym", 10e24},
+		DistanceUnit{"m", 1},
+		DistanceUnit{"dm", 1e-1},
+		DistanceUnit{"cm", 1e-2},
+		DistanceUnit{"mm", 1e-3},
+		DistanceUnit{"μm", 1e-6},
+		DistanceUnit{"nm", 1e-9},
+		DistanceUnit{"pm", 1e-12},
+		DistanceUnit{"fm", 1e-15},
+		DistanceUnit{"am", 1e-18},
+		DistanceUnit{"zm", 1e-21},
+		DistanceUnit{"ym", 1e-24},
+	}	
+	
+	fmt.Println("============")
+	fmt.Println(distances)
+	
 	// To update list below, run "google_finance_currencies.go"
 	output.currencies = [][]string{
 		[]string{"AED", "UAE Dirham"},
@@ -206,6 +238,22 @@ func NewConversions() *Conversions {
 			return baseConv(input, 8, "%b")
 		},
 	})
+	
+	// distanceConv := func(input string, from string, to string) (string, error) {
+	// 	// km	kilometer	Convert mile to kilometer
+	// 	// m	meter	Convert foot to mile
+	// 	// dm	decimeter	Convert yard to mile
+	// 	// cm	centimeter	Convert nautical mile to mile
+	// 	// mm	millimeter	 
+	// 	// mile	mile	 
+	// 	// in	inch	 
+	// 	// ft	foot	 
+	// 	// yd	yard	 
+	// 	// nautical mile	nautical mile
+		
+	// 	return "", nil
+		
+	// }
 	
 	currencyConv := func(input string, from string, to string) (string, error) {
 		floatInput, err := strconv.ParseFloat(input, 64)
