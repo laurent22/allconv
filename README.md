@@ -8,13 +8,16 @@ A command line tool to convert between number bases and currencies.
     
 ## Usage
 
-    Usage: aconv <command> [<value>]
-    
+    Usage: aconv <command> [flags] [<value>]
+
     Commands:
        list          Lists all the possible conversions.
        <from>2<to>   Converts from <from> to <to>. eg. hex2bin, dec2oct, eur2usd, etc.
        help          Displays this help page.
-    
+
+    Flags:
+       --format   Output format - either "simple", "withUnit" or "full". (Default: full)
+
     Examples:
        aconv bin2hex 1100110010   # Convert binary to hexadecimal
        aconv hex2dec ff5c         # Convert hexadecimal to decimal
