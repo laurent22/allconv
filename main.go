@@ -20,24 +20,55 @@ func parseConversionCommand(cmd string) (string, string, error) {
 }
 
 func printUsage() {
-	fmt.Println("Usage: aconv <command> [<value>]")
+	fmt.Println("Usage: aconv <command> [flags] [<value>]")
 	fmt.Println("")
 	fmt.Println("Commands:")
 	fmt.Println("   list          Lists all the possible conversions.")
 	fmt.Println("   <from>2<to>   Converts from <from> to <to>. eg. hex2bin, dec2oct, eur2usd, etc.")
 	fmt.Println("   help          Displays this help page.")
 	fmt.Println("")
+	fmt.Println("Flags:")
+	flag.VisitAll(func(f *flag.Flag) {
+		fmt.Printf("   --%s   %s (Default: %s)\n", f.Name, f.Usage, f.DefValue)
+	})
+	fmt.Println("")
 	fmt.Println("Examples:")
 	fmt.Println("   aconv bin2hex 1100110010   # Convert binary to hexadecimal")
 	fmt.Println("   aconv hex2dec ff5c         # Convert hexadecimal to decimal")
 	fmt.Println("   aconv eur2usd 10           # Convert Euros to US Dollars")
 	fmt.Println("   aconv aud2jpy 5000         # Convert Australian Dollars to Japanese Yens")
-	flag.PrintDefaults()
 }
 
-func processCommand(args []string) (string, error) {
+func createFormat(formatType string) (string, error) {
+	f := strings.ToLower(formatType)
+	if f == "simple" {
+		return "%i", nil
+	}
+	if f == "withunit" {
+		return "%i %u", nil
+	}
+	if f == "full" {
+		return "%i %u = %o %v", nil
+	}
+	return "", errors.New("Unknown format type: \"" + formatType + "\"")
+}
+
+func exitWithError(message string) {
+	fmt.Println(message)
+	fmt.Println("")
+	printUsage()
+	os.Exit(1)
+}
+
+func main() {
+	var fFormat string
+	flag.StringVar(&fFormat, "format", "full", "Output format - either \"simple\", \"withUnit\" or \"full\".")
+	flag.Parse()
+	
+	args := flag.Args()
+	
 	if len(args) < 1 {
-		return "", errors.New("No command specified.")
+		exitWithError("No command specified.")
 	}
 	
 	conv := conversions.NewConversions()
@@ -49,7 +80,7 @@ func processCommand(args []string) (string, error) {
 		case "help": 
 		
 			printUsage()
-			return "", nil
+			os.Exit(0)
 		
 		case "list": 
 		
@@ -65,42 +96,32 @@ func processCommand(args []string) (string, error) {
 					s += "   " + unitName + "   " + conv.NiceUnitName(categoryName, unitName) + "\n"
 				}
 			}
-			return s, nil
+			fmt.Println(s)
+			os.Exit(0)
 			
 		default: 
 		
 			if len(args) < 2 {
-				return "", errors.New("No value specified.")
+				exitWithError("No value specified.")
 			}
 		
 			fromUnit, toUnit, err := parseConversionCommand(args[0])
 			if err != nil {
-				return "", err
+				exitWithError(fmt.Sprint(err))
 			}
 			value := args[1]
-							
-			result, err := conv.Convert(fromUnit, toUnit, value)
+			
+			format, err := createFormat(fFormat)
 			if err != nil {
-				return "", errors.New("Could not convert input: " + fmt.Sprint(err))
+				exitWithError(fmt.Sprint(err))
+			}
+			result, err := conv.ConvertFormat(format, fromUnit, toUnit, value)
+			if err != nil {
+				exitWithError("Could not convert input: " + fmt.Sprint(err))
 			}
 			
-			return result, nil
+			fmt.Println(result)
+			os.Exit(0)
 			
-	}	
-}
-
-func main() {	
-	flag.Parse()
-	
-	result, err := processCommand(flag.Args())
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("")
-		printUsage()
-		os.Exit(1)
-	}
-	
-	if result != "" {
-		fmt.Println(result)
 	}
 }

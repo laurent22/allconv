@@ -246,8 +246,8 @@ func NewConversions() *Conversions {
 	
 	for i := 0; i < len(output.currencies); i++ {
 		for j := 0; j < len(output.currencies); j++ {
-			c1 := strings.ToLower(output.currencies[i][0])
-			c2 := strings.ToLower(output.currencies[j][0])
+			c1 := output.currencies[i][0]
+			c2 := output.currencies[j][0]
 			output.Add(Conversion{
 				"currency", c1, c2, func(input string) (string, error) {
 					return currencyConv(input, c1, c2)
@@ -265,9 +265,23 @@ func (this *Conversions) settings() *settings.Settings {
 	return this.settings_
 }
 
+func (this *Conversions) ConvertFormat(format string, from string, to string, input string) (string, error) {
+	result, err := this.Convert(from, to, input)
+	if err != nil { return result, err }
+	oFrom, oTo := this.OriginalUnitNames(from, to)
+	output := format
+	output = strings.Replace(output, "%i", input, -1)
+	output = strings.Replace(output, "%o", result, -1)
+	output = strings.Replace(output, "%u", oFrom, -1)
+	output = strings.Replace(output, "%v", oTo, -1)
+	return output, nil
+}
+
 func (this *Conversions) Convert(from string, to string, input string) (string, error) {
+	fromLower := strings.ToLower(from)
+	toLower := strings.ToLower(to)
 	for _, c := range this.inner {
-		if c.from == from && c.to == to {
+		if strings.ToLower(c.from) == fromLower && strings.ToLower(c.to) == toLower {
 			return c.convert(input)
 		}
 	}
@@ -280,6 +294,19 @@ func (this *Conversions) Add(c Conversion) {
 
 func (this *Conversions) NiceCategoryName(s string) string {
 	return s
+}
+
+func (this *Conversions) OriginalUnitNames(from string, to string) (string, string) {
+	lTo := strings.ToLower(to)
+	lFrom := strings.ToLower(from)
+	
+	for _, c := range this.inner {
+		if strings.ToLower(c.to) == lTo && strings.ToLower(c.from) == lFrom {
+			return c.from, c.to
+		}
+	}
+	
+	return from, to
 }
 
 func (this *Conversions) NiceUnitName(category string, s string) string {
