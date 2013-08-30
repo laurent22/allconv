@@ -19,8 +19,27 @@ func parseConversionCommand(cmd string) (string, string, error) {
 	return tokens[0], tokens[1], nil
 }
 
+func printFlags() {
+	longestName := 0
+	flag.VisitAll(func(f *flag.Flag) {
+		if f.Name == "help" { return }
+		if len(f.Name) > longestName {
+			longestName = len(f.Name)		
+		} 
+	})
+	
+	indentOffset := longestName + 3
+	flag.VisitAll(func(f *flag.Flag) {
+		if f.Name == "help" { return }
+		s :=  "   --%s"
+		s += strings.Repeat(" ", indentOffset - len(f.Name))
+		s +=  "%s (Default: %s)\n"
+		fmt.Printf(s, f.Name, f.Usage, f.DefValue)
+	})
+}
+
 func printUsage() {
-	fmt.Println("Usage: aconv <command> [flags] [<value>]")
+	fmt.Println("Usage: aconv [flags] <command> [<value>]")
 	fmt.Println("")
 	fmt.Println("Commands:")
 	fmt.Println("   list          Lists all the possible conversions.")
@@ -28,10 +47,7 @@ func printUsage() {
 	fmt.Println("   help          Displays this help page.")
 	fmt.Println("")
 	fmt.Println("Flags:")
-	flag.VisitAll(func(f *flag.Flag) {
-		if f.Name == "help" { return }
-		fmt.Printf("   --%s   %s (Default: %s)\n", f.Name, f.Usage, f.DefValue)
-	})
+	printFlags()
 	fmt.Println("")
 	fmt.Println("Examples:")
 	fmt.Println("   aconv bin2hex 1100110010   # Convert binary to hexadecimal")
@@ -63,8 +79,10 @@ func exitWithError(message string) {
 
 func main() {
 	var fFormat string
+	var fReverse bool
 	var fHelp bool
 	flag.StringVar(&fFormat, "format", "full", "Output format - either \"simple\", \"withUnit\" or \"full\".")
+	flag.BoolVar(&fReverse, "reverse", false, "Reverse the conversion. eg. hex2bin becomes bin2hex, etc.")
 	flag.BoolVar(&fHelp, "help", false, "Displays this help page.") // Defined only to prevent Go from outputting the default help page
 	flag.Parse()
 	
@@ -112,6 +130,11 @@ func main() {
 			if err != nil {
 				exitWithError(fmt.Sprint(err))
 			}
+			if fReverse {
+				temp := fromUnit
+				fromUnit = toUnit
+				toUnit = temp
+			}
 			value := args[1]
 			
 			format, err := createFormat(fFormat)
@@ -127,4 +150,6 @@ func main() {
 			os.Exit(0)
 			
 	}
+	
+	panic("Unreachable")
 }
