@@ -29,6 +29,7 @@ func printUsage() {
 	fmt.Println("")
 	fmt.Println("Flags:")
 	flag.VisitAll(func(f *flag.Flag) {
+		if f.Name == "help" { return }
 		fmt.Printf("   --%s   %s (Default: %s)\n", f.Name, f.Usage, f.DefValue)
 	})
 	fmt.Println("")
@@ -62,7 +63,9 @@ func exitWithError(message string) {
 
 func main() {
 	var fFormat string
+	var fHelp bool
 	flag.StringVar(&fFormat, "format", "full", "Output format - either \"simple\", \"withUnit\" or \"full\".")
+	flag.BoolVar(&fHelp, "help", false, "Displays this help page.") // Defined only to prevent Go from outputting the default help page
 	flag.Parse()
 	
 	args := flag.Args()
